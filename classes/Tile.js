@@ -30,13 +30,6 @@ export default class Tile {
             }
         }
 
-
-        if(isDummy){
-            this.#color = Settings.type == "Zwart" ? Settings.dummyZwartBackground : Settings.dummyTerracottaBackground;
-        }else{
-            this.#color = Settings.type == "Zwart" ? Settings.tileZwartBackground : Settings.tileTerracottaBackground;
-        }
-
         const xArr = this.#vertices.map(a => a.x);
         const yArr = this.#vertices.map(a => a.y);
         this.width = (Math.max(...xArr) - Math.min(...xArr));
@@ -48,6 +41,17 @@ export default class Tile {
                 this.#buffer = createGraphics(this.width, this.height);
             }
 
+            // console.log(this.isDummy, this.#vertices.length, this.width == 82, this.height == 50, this.height == 60);
+            // if(this.isDummy && this.#vertices.length == 4 && this.width == 82 && (this.height == 50 || this.height == 60)){
+            //     this.isDummy = false;
+            //     isDummy = false;
+            // }
+
+            if(isDummy){
+                this.#color = Settings.type == "Zwart" ? Settings.dummyZwartBackground : Settings.dummyTerracottaBackground;
+            }else{
+                this.#color = Settings.type == "Zwart" ? Settings.tileZwartBackground : Settings.tileTerracottaBackground;
+            }
             this.generate();
         }
     }
