@@ -1211,7 +1211,7 @@ export default class GeneratorTool {
     }
 
     toJSON() {
-        var t = { 'Alucobond': [], 'X-Roof': [], 'Ventilatiekap': [] };
+        var t = { 'Alucobond': [], 'X-Roof': [], 'Ventilatiekap': [], 'Dummy X-Roof': [] };
 
         for (let i = 0; i < this.#tiles.length; i++) {
             const tile = this.#tiles[i];
@@ -1223,7 +1223,14 @@ export default class GeneratorTool {
                 this.#dummyWidth += tile.width;
                 this.#dummyHeight += tile.height;
             }
-            else if (tile.isVent) {
+            else if (tile.isVent == "dummy") {
+                t['Dummy X-Roof'].push(tile.toJSON());
+                this.#totalWidth += tile.width;
+                this.#totalHeight += tile.height;
+                this.#dummyWidth += tile.width;
+                this.#dummyHeight += tile.height;
+            }
+            else if (tile.isVent == "vent") {
                 t['Ventilatiekap'].push(tile.toJSON());
             }
             else {
@@ -1235,6 +1242,7 @@ export default class GeneratorTool {
             }
         }
 
+        console.log(t);
         return { 'tiles': t, 'width': this.#totalWidth, 'height': this.#totalHeight, 'tile_width': this.#tileWidth, 'tile_height': this.#tileHeight, 'dummy_width': this.#dummyWidth, 'dummy_height': this.#dummyHeight };
     }
 
