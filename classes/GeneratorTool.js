@@ -450,7 +450,7 @@ export default class GeneratorTool {
 
     async #generateTiles(shape, inset, overhang, outsets) {
         var self = this;
-        var tileSize = new Vector2(820 / 10, (600 / 10));
+        var tileSize = new Vector2(1035 / 10, 630 / 10);
         var overlap = 100 / 10;
         var shapePoints = shape.getVertices();
         var insetPoints = inset.getVertices();
@@ -1242,7 +1242,6 @@ export default class GeneratorTool {
             }
         }
 
-        console.log(t);
         return { 'tiles': t, 'width': this.#totalWidth, 'height': this.#totalHeight, 'tile_width': this.#tileWidth, 'tile_height': this.#tileHeight, 'dummy_width': this.#dummyWidth, 'dummy_height': this.#dummyHeight };
     }
 
@@ -1281,6 +1280,19 @@ export default class GeneratorTool {
             if (json.tiles['Ventilatiekap']) {
                 for (let i = 0; i < json.tiles['Ventilatiekap'].length; i++) {
                     const tile = json.tiles['Ventilatiekap'][i];
+
+                    var vertices = [];
+                    for (let i = 0; i < tile.vertices.length; i++) {
+                        const vertice = tile.vertices[i];
+                        vertices.push(Vector2.fromJSON(vertice));
+                    }
+                    this.#tiles.push(new Tile(vertices, this.#buffer, tile.isDummy, tile.isVent));
+                }
+            }
+
+            if (json.tiles['Dummy X-Roof']) {
+                for (let i = 0; i < json.tiles['Dummy X-Roof'].length; i++) {
+                    const tile = json.tiles['Dummy X-Roof'][i];
 
                     var vertices = [];
                     for (let i = 0; i < tile.vertices.length; i++) {
