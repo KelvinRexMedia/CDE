@@ -8,8 +8,8 @@ export default defineConfig({
             fileName: 'cde'
         },
         emptyOutDir: true,
-        // minify: 'terser',
-        minify: false,
+        minify: 'terser',
+        // minify: false,
         outDir: './build',
         assetsDir: '',
         rollupOptions: {
