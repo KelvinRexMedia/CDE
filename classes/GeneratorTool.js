@@ -1239,6 +1239,10 @@ export default class GeneratorTool {
     toJSON() {
         var t = { 'Alucobond': [], 'X-Roof': [], 'Ventilatiekap': [], 'Dummy X-Roof': [] };
 
+        this.#totalWidth = 0;
+        this.#totalHeight = 0;
+        this.#dummyWidth = 0;
+        this.#dummyHeight = 0;
         for (let i = 0; i < this.#tiles.length; i++) {
             const tile = this.#tiles[i];
 
