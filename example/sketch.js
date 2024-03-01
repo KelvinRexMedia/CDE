@@ -84,7 +84,7 @@ function draw() {
     cursor.update();
     pop();
 
-    // showFPS();
+    showFPS();
     // showHistory();
     updateVisuals();
 
