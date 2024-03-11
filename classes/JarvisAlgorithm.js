@@ -17,7 +17,7 @@ export default class JarvisAlgorithm{
             const b = p5.Vector.sub(checking, current);
             const cross = a.cross(b);
             
-            if(cross.z <= 0){
+            if(cross.z < 0){
                 next = checking;
                 nextIndex = index;
             }

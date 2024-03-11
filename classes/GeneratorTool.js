@@ -3,6 +3,7 @@ import Vector2 from "./Vector2";
 import Collision from "./Collision";
 import Tile from "./Tile";
 import JarvisAlgorithm from "./JarvisAlgorithm";
+import HullK from './hull';
 
 export default class GeneratorTool {
     isEnabled = false;
@@ -473,7 +474,7 @@ export default class GeneratorTool {
                 // await self.#sleep(1000);
             // }
         }
-        await loop(topleft.x + self.offsetX, topleft.y + self.offsetY - tileSize.y + overlap, tileSize.x, tileSize.y);
+        await loop(topleft.x + self.offsetX + 320, topleft.y + self.offsetY - tileSize.y + overlap, tileSize.x, tileSize.y);
 
         this.#buffer.fill(255, 0, 0);
         this.#buffer.circle(topleft.x + self.offsetX, topleft.y + self.offsetY, 10);
@@ -491,79 +492,84 @@ export default class GeneratorTool {
                     let forbidden = this.#isInsideForbiddenShapes(outsets, b, a);
                     if(!forbidden){
                         points.push(createVector(b, a));
+                        // points.push(new Vector2(b, a));
                         this.#buffer.circle(b, a, 2);
                     }
                 }
             }
         }
+        points.sort((a, b) => a.x - b.x);
+        console.log(points);
 
-        let maxDistance = this.#densitySpacing;
+        let maxDistance = 10;
         let index = 2;
         let nextIndex = -1;
-        let hull = [];
+        let shapeHull = [];
         let mostLeft, current, next;
 
-        mostLeft = points[0];
-        current = mostLeft;
-        next = points[1];
-        hull.push(current);
-        // points.splice(0, 1);
-        // points.splice(0, 1);
+        // mostLeft = points[0];
+        // current = mostLeft;
+        // hull.push(current);
+        // next = points[1];
 
-        var loop = true;
-        while(loop){
-            var checking = points[index];
-            const a = p5.Vector.sub(next, current);
-            const b = p5.Vector.sub(checking, current);
-            const cross = a.cross(b);
+        // var loop = true;
+        // while(loop){
+        //     var checking = points[index];
+        //     const a = p5.Vector.sub(next, current);
+        //     const b = p5.Vector.sub(checking, current);
+        //     const cross = a.cross(b);
 
-            this.#buffer.clear();
-            for (let i = 0; i < points.length; i++) {
-                const point = points[i];
-                this.#buffer.circle(point.x, point.y, 2);
-                // this.#buffer.text(i, point.x, point.y);
-            }
+        //     this.#buffer.clear();
+        //     for (let i = 0; i < points.length; i++) {
+        //         const point = points[i];
+        //         this.#buffer.circle(point.x, point.y, 2);
+        //         // this.#buffer.text(i, point.x, point.y);
+        //     }
             
-            this.#buffer.stroke(255, 0, 0);
-            this.#buffer.line(current.x, current.y, checking.x, checking.y);
-            this.#buffer.stroke(0);
-            if(next != mostLeft){
-                this.#buffer.line(current.x, current.y, next.x, next.y);
-            }
+        //     this.#buffer.stroke(255, 0, 0);
+        //     this.#buffer.line(current.x, current.y, checking.x, checking.y);
+        //     this.#buffer.stroke(0);
+        //     if(next != mostLeft){
+        //         this.#buffer.line(current.x, current.y, next.x, next.y);
+        //     }
             
-            if(cross.z <= 0){
-                const distance = current.dist(checking);
-                if(maxDistance == -1 || (distance <= maxDistance && distance != 0)){
-                    next = checking;
-                    nextIndex = index;
-                }
-            }
+        //     if(cross.z < 0){
+        //         const distance = current.dist(checking);
+        //         if(maxDistance === -1 || (distance <= maxDistance && distance != 0)){
+        //             next = checking;
+        //             nextIndex = index;
+        //         }
+        //     }
                 
-            index++;
-            if(index == points.length){
-                if(next == mostLeft){
-                    loop = false;
-                }
+        //     index++;
+        //     if(index == points.length){
+        //         if(next == mostLeft){
+        //             console.log('done');
+        //             loop = false;
+        //         } else {
+        //             hull.push(next);
+        //             current = next;
+        //             if(index >= 0){
+        //                 console.log("Splicing", nextIndex);
+        //                 points.splice(nextIndex, 1);
+        //             }
+        //             index = 0;
+        //             nextIndex = -1;
+        //             next = mostLeft;
+        //         }
+        //     }
+        //     // await this.#sleep(50);
+        // }
 
-                hull.push(next);
-                current = next;
-                if(index >= 0){
-                    console.log("Splicing", nextIndex);
-                    points.splice(nextIndex, 1);
-                }
-                nextIndex = -1;
-                index = 0;
-                next = mostLeft;
+        // calculate alpha/ concave hull
 
-            }
-            await this.#sleep(50);
-        }
+        shapeHull = HullK(points, 1050);
 
         // const hull = JarvisAlgorithm.calculate(points, this.#densitySpacing);
         this.#buffer.fill(0, 0, 255, 50);
         this.#buffer.beginShape();
-        for (let i = 0; i < hull.length; i++) {
-            const point = hull[i];
+        for (let i = 0; i < shapeHull.length; i++) {
+            const point = shapeHull[i];
             this.#buffer.vertex(point.x, point.y);
         }
         this.#buffer.endShape(CLOSE);
