@@ -3,7 +3,6 @@ import Vector2 from "./Vector2";
 import Collision from "./Collision";
 import Tile from "./Tile";
 import Hull from './hull';
-import concaveHullAlgorithm from './concaveHull';
 
 export default class GeneratorTool {
     isEnabled = false;
@@ -37,7 +36,7 @@ export default class GeneratorTool {
     #dummyHeight = 0;
     #tileWidth = 0;
     #tileHeight = 0;
-    #densitySpacing = 2;
+    #densitySpacing = 10;
     #sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
 
     constructor() {
@@ -464,12 +463,11 @@ export default class GeneratorTool {
         var tmpResults = [];
 
         var syncedPlaceTile = async (x, y, predictionPoints, isDummy = false) => new Promise((resolve) => {
-            var originalPredictionPoints = predictionPoints;
             var delay = 1;
             // var isDummy = false;
             count++;
             
-            setTimeout(async () => {
+            setTimeout(() => {
                 var results = [];
                 var collisions = [];
                 var inShapeCount = 0;
@@ -567,7 +565,7 @@ export default class GeneratorTool {
 
                 var pointsAddedThroughException = false;
                 if(inForbiddenCount == 2 && outsideShapeCount == 2){
-                    // console.log(count,'inShapeCount == 2 && outsideShapeCount == 2');
+                    console.log(count,'inShapeCount == 2 && outsideShapeCount == 2');
                     for (let i = 0; i < predictionPoints.length; i++) {
                         const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
                         const vc = predictionPoints[i];
@@ -607,7 +605,7 @@ export default class GeneratorTool {
                         }
                     }
                 } else if(inForbiddenCount >= 1 && outsideShapeCount >= 1){
-                    // console.log(count,'inShapeCount >= 1 && outsideShapeCount >= 1');
+                    console.log(count,'inShapeCount >= 1 && outsideShapeCount >= 1');
                     for (let i = 0; i < predictionPoints.length; i++) {
                         const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
                         const vc = predictionPoints[i];
@@ -647,7 +645,7 @@ export default class GeneratorTool {
                         }
                     }
                 } else if(inForbiddenCount == 1 && outsideShapeCount == 0){
-                    // console.log(count,'inShapeCount == 1 && outsideShapeCount == 0');
+                    console.log(count,'inShapeCount == 1 && outsideShapeCount == 0');
                     for (let i = 0; i < predictionPoints.length; i++) {
                         const vp = predictionPoints[i - 1 >= 0 ? i - 1 : predictionPoints.length - 1];
                         const vc = predictionPoints[i];
@@ -689,7 +687,6 @@ export default class GeneratorTool {
 
                 var doExtraReorder = false;
                 var extraTile = null;
-                var isSplitTile = false;
                 //split tile
                 if(collisions.length >= 4){
                     if(pointsNeedToBeAdded.length == 1) {
@@ -1057,60 +1054,46 @@ export default class GeneratorTool {
                 }
 
                 predictionPoints = Vector2.copyAll(results);
-                
+
                 //Reorder vertices
+                // predictionPoints = predictionPoints.map((a) => [a.x, a.y]);
+                // predictionPoints = Hull(predictionPoints, 0, this.#densitySpacing);
+                // if(isDummy && doExtraReorder){
+                //     console.log('EXTRA')
+                //     // extraTile = this.reorderCoordinatesByDistance(extraTile,count);
+                //     // extraTile = Hull(extraTile, 0, this.#densitySpacing);
+                // }
+                // predictionPoints = predictionPoints.map((a) => new Vector2(a[0], a[1]));
+                
+                // OLD
                 if(isDummy && doExtraReorder){
                     predictionPoints = this.reorderCoordinatesByDistance(predictionPoints,count);
                     extraTile = this.reorderCoordinatesByDistance(extraTile,count);
                 }
-
                 // create tile
                 var tile;
                 if(inShapeCount >= 1){
-                    // tile = self.#createTile(predictionPoints, isDummy);
-
-                    // If split tile, use predictionPoints
-                    if(extraTile != null) {
-                        // for (let index = 0; index < predictionPoints.length; index++) {
-                        //     const element = predictionPoints[index];
-                        //     this.#buffer.fill(255, 0, 0);
-                        //     this.#buffer.text(index, element.x, element.y);
-                        // }
-                        tile = await self.#generateTile(predictionPoints, inset, overhang, outsets, isDummy, count, true);
-                    }
-                    // Otherwise use OriginalPrediction points
-                    else {
-                        // for (let index = 0; index < originalPredictionPoints.length; index++) {
-                        //     const element = originalPredictionPoints[index];
-                        //     this.#buffer.fill(0, 0, 255);
-                        //     this.#buffer.circle(element.x, element.y, 8);
-                        // }
-                        // tile = self.#createTile(predictionPoints, isDummy);
-                        tile = await self.#generateTile(originalPredictionPoints, inset, overhang, outsets, isDummy, count, false);
-                    }
+                    tile = self.#createTile(predictionPoints, isDummy);
+                    tile.hullFix(outsets, insetPoints);
+                    tile.generate();
                 }
                 var extra = null;
 
                 if(tile != null){
-                    // var bb = tile.getBoundingBox();
-                    // if (bb.h <= 0 || bb.w <= 0) {
-                    //     tile = null;
-                    // }
+                    var bb = tile.getBoundingBox();
+                    if (bb.h <= 0 || bb.w <= 0) {
+                        tile = null;
+                    }
                 }
 
                 if(extraTile != null){
-                    // extra = self.#createTile(extraTile, isDummy);
-                    // for (let index = 0; index < extraTile.length; index++) {
-                    //     const element = extraTile[index];
-                    //     this.#buffer.fill(0, 255, 0);
-                    //     this.#buffer.text(index, element.x, element.y);
-                    // }
-                    extra = await self.#generateTile(extraTile, inset, overhang, outsets, isDummy, count, true);
-
-                    // var extraBb = extra.getBoundingBox();
-                    // if (extraBb.h <= 0 || extraBb.w <= 0) {
-                    //     extra = null;
-                    // }
+                    extra = self.#createTile(extraTile, isDummy);
+                    extra.hullFix(outsets, insetPoints);
+                    extra.generate();
+                    var extraBb = extra.getBoundingBox();
+                    if (extraBb.h <= 0 || extraBb.w <= 0) {
+                        extra = null;
+                    }
                 }
                 resolve([tile, extra]);
             }, delay);
@@ -1141,7 +1124,7 @@ export default class GeneratorTool {
                     }
                 });
             }
-            // await self.#sleep(10);
+            await self.#sleep(10);
 
             //Neighbour right
             if(typeof tmpTiles[(xIndex + 1) + ", " + yIndex] === "undefined"){
@@ -1217,94 +1200,6 @@ export default class GeneratorTool {
 
         this.#tiles = this.#tiles.concat(tmpResults);
     }
-
-    async #generateTile(predictedPoints, inset, overhang, outsets, isDummy, count, needReorder){
-        // if (count == 59 || count == 143) console.log('meep');
-        // else return [];
-
-        this.#buffer.stroke(0);
-        let points = [];
-        let insetPoints = overhang.getVertices();
-
-        // Add a fourth point
-        if (predictedPoints.length == 3) { 
-            let fourthPointX = predictedPoints[0].x == predictedPoints[1].x ? predictedPoints[2].x : predictedPoints[0].x;
-            let fourthPointY = predictedPoints[0].y == predictedPoints[1].y ? predictedPoints[2].y : predictedPoints[0].y;
-            predictedPoints.splice(3, 0, createVector(fourthPointX, fourthPointY));
-        }
-        if (needReorder) this.#reorderClockwise(predictedPoints);
-
-        for (let index = 0; index < predictedPoints.length; index++) {
-            const element = predictedPoints[index];
-            this.#buffer.fill(0, 0, 255);
-            this.#buffer.circle(element.x, element.y, 8);
-        }
-
-        if(isDummy){
-            for(let a = predictedPoints[0].y; a <= predictedPoints[3].y; a += this.#densitySpacing){
-                for(let b = predictedPoints[0].x; b <= predictedPoints[1].x; b += this.#densitySpacing){
-                    if(this.IsInside(insetPoints, b, a)){
-                        let forbidden = this.IsInsideForbiddenShapes(outsets, b, a, false);
-                        if(!forbidden){
-                            // this.#buffer.circle(b, a, 2);
-                            // To be added
-                            points.push([b, a]);
-
-                        }
-                    }
-                }
-            }
-            if(this.#densitySpacing % 2 == 0){
-                var extras = [];
-                for(let a = predictedPoints[0].y; a <= predictedPoints[3].y + (this.#densitySpacing / 2); a += this.#densitySpacing){
-                    for(let b = predictedPoints[0].x; b <= predictedPoints[1].x + (this.#densitySpacing / 2); b += this.#densitySpacing){
-                        if(this.IsInside(insetPoints, b, a)){
-                            if(a >= predictedPoints[3].y && b >= predictedPoints[1].x){
-                                console.log("yay part 2");
-                                extras.push([b - (this.#densitySpacing / 2), a - (this.#densitySpacing / 2)]);
-                            }
-                            else if(a >= predictedPoints[3].y){
-                                console.log("yay part 3");
-                                extras.push([b, a - (this.#densitySpacing / 2)]);
-                            }
-                            else if(b >= predictedPoints[1].x){
-                                console.log("yay part 4");
-                                extras.push([b - (this.#densitySpacing / 2), a]);
-                            }
-                        }
-                    }
-                }
-
-                for (let a = 0; a < extras.length; a++) {
-                    const extra = extras[a];
-                    let forbidden = this.IsInsideForbiddenShapes(outsets, extra[0], extra[1], false);
-                    if(!forbidden){
-                        points.push([extra[0], extra[1]]);
-
-                    }
-                }
-            }
-            
-            if(points.length > 0) { 
-                points.sort((a, b) => a.x - b.x);
-                // let concaveHull = Hull(points, 5, this.#densitySpacing);
-                let concaveHull = concaveHullAlgorithm.calculate(points, 5);
-                let hull = concaveHull.map((a) => new Vector2(a[0], a[1]));
-    
-                var actualTile = this.#createTile(hull, isDummy);
-    
-                var actualTileBb = actualTile.getBoundingBox();
-                if (actualTileBb.h <= 0 || actualTileBb.w <= 0) {
-                    actualTile = null;
-                }
-                return actualTile;
-            }
-            else return null;
-        }
-        else{
-            return this.#createTile(predictedPoints, isDummy);
-        }
-    }   
 
     #createTile(vertices, isDummy) {
         return new Tile(vertices, this.#buffer, isDummy);

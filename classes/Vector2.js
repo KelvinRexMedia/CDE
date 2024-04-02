@@ -22,6 +22,7 @@ export default class Vector2{
     static equals = (v1, v2) => { return v1.x == v2.x && v1.y == v2.y; };
     static copyAll = (arr) => { var tmp = []; for (let i = 0; i < arr.length; i++) { tmp.push(new Vector2(arr[i].x, arr[i].y));} return tmp; };
     static dot = (v1, v2) => { return v1.x * v2.x + v1.y * v2.y; };
+    static cross = (v1, v2) => { return v1.x * v2.y - v1.y * v2.x; };
     static abs = (v) => { return new Vector2(Math.abs(v.x), Math.abs(v.y)); };
     static reverse = (v) => { v.x = -v.x; v.y = -v.y; return v; };
 

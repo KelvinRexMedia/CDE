@@ -4,36 +4,50 @@
         return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
     }
     
-    function _upperTangent(pointset) {
+    function _upperTangent(pointset, maxDistance) {
         const lower = [];
         for (let l = 0; l < pointset.length; l++) {
             while (lower.length >= 2 && (_cross(lower[lower.length - 2], lower[lower.length - 1], pointset[l]) <= 0)) {
+                // if (distance(lower[lower.length - 1], pointset[l]) > maxDistance) {
+                //     lower.pop();
+                // }
                 lower.pop();
             }
             lower.push(pointset[l]);
         }
         lower.pop();
+        // console.log('lower', lower);
         return lower;
     }
     
-    function _lowerTangent(pointset) {
+    function _lowerTangent(pointset, maxDistance) {
         const reversed = pointset.reverse(),
             upper = [];
         for (let u = 0; u < reversed.length; u++) {
             while (upper.length >= 2 && (_cross(upper[upper.length - 2], upper[upper.length - 1], reversed[u]) <= 0)) {
+                // if (distance(upper[upper.length - 1], reversed[u]) > maxDistance) {
+                //     upper.pop();
+                // }
                 upper.pop();
             }
             upper.push(reversed[u]);
         }
         upper.pop();
+        // console.log('upper', upper);
         return upper;
     }
+
+    // Function to calculate distance between two points
+    function distance(point1, point2) {
+        return Math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2);
+    } 
     
     // pointset has to be sorted by X
-    function convex(pointset) {
-        const upper = _upperTangent(pointset),
-              lower = _lowerTangent(pointset);
+    function convex(pointset, maxDistance) {
+        const upper = _upperTangent(pointset, maxDistance),
+              lower = _lowerTangent(pointset, maxDistance);
         const convex = lower.concat(upper);
+        // console.log('convex', JSON.stringify(convex), pointset[0]);
         convex.push(pointset[0]);  
         return convex;  
     }
@@ -270,7 +284,7 @@
         return point;
     }
     
-    function _concave(convex, maxSqEdgeLen, maxSearchArea, grid, edgeSkipList) {
+    function _concave(convex, maxSqEdgeLen, maxSearchArea, grid, edgeSkipList, minDistance) {
         let midPointInserted = false;
     
         for (let i = 0; i < convex.length - 1; i++) {
@@ -293,7 +307,8 @@
     
                 midPoint = _midPoint(edge, grid.rangePoints(bBoxAround), convex);
                 scaleFactor++;
-            }  while (midPoint === null && (maxSearchArea[0] > bBoxWidth || maxSearchArea[1] > bBoxHeight));
+            } while ((midPoint === null || _distance(edge[0], midPoint) < minDistance) && 
+                     (maxSearchArea[0] > bBoxWidth || maxSearchArea[1] > bBoxHeight));
     
             if (bBoxWidth >= maxSearchArea[0] && bBoxHeight >= maxSearchArea[1]) {
                 edgeSkipList.add(keyInSkipList);
@@ -307,20 +322,27 @@
         }
     
         if (midPointInserted) {
-            return _concave(convex, maxSqEdgeLen, maxSearchArea, grid, edgeSkipList);
+            return _concave(convex, maxSqEdgeLen, maxSearchArea, grid, edgeSkipList, minDistance);
         }
     
         return convex;
     }
     
-    function hull(points, concavity, format) {
+    // Function to calculate the distance between two points
+    function _distance(point1, point2) {
+        const dx = point2[0] - point1[0];
+        const dy = point2[1] - point1[1];
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    
+    function hull(pointset, concavity, maxDistance, format) {
  
         let maxEdgeLen = concavity || 20;
     
-        // const points = _filterDuplicates(_sortByX(formatUtil.toXy(pointset, format)));
-        console.log(points);
+        const points = _filterDuplicates(_sortByX(formatUtil.toXy(pointset, format)));
         if (points.length < 4) {
-            console.log('Points is lower than 4');
+            console.log('Points is lower than 4', points);
             return points.concat([points[0]]);
         }
     
@@ -330,23 +352,27 @@
             occupiedArea[1] * MAX_SEARCH_BBOX_SIZE_PERCENT
         ];
     
-        const convex = convexHull(points);
+        const convex = convexHull(points, maxDistance);
         const innerPoints = points.filter(function(pt) {
             return convex.indexOf(pt) < 0;
         });
+        // console.log('convex' ,convex);
     
         const cellSize = Math.ceil(1 / (points.length / (occupiedArea[0] * occupiedArea[1])));
+        // console.log('cellSize' ,cellSize);
+
     
         const concave = _concave(
             convex, Math.pow(maxEdgeLen, 2),
-            maxSearchArea, grid(innerPoints, cellSize), new Set());
-        console.log('concave yo ', concave);
+            maxSearchArea, grid(innerPoints, cellSize), new Set(), maxDistance);
+        
+        // console.log('concave' ,concave);
+        // console.log('----------');
+
     
         if (format) {
-            console.log('Something format', formatUtil.fromXy(concave, format));
             return formatUtil.fromXy(concave, format);
         } else {
-            console.log('Something concave', concave);
             return concave;
         }
     }
